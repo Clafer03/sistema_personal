@@ -1,0 +1,26 @@
+<h1>Registrar nuevo dato</h1>
+<form method="post">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button type="submit" name="accion" value="registrar">Registrar</button>
+</form>
+<a href="{% url 'ver_datos' %}">
+    <button type="button">Ver gráfico</button>
+</a>
+{% if form.errors %}
+    <div class="error">
+        <p>Por favor corrige los errores:</p>
+        <ul>
+            {% for field in form %}
+                {% for error in field.errors %}
+                    <li>{{ error }}</li>
+                {% endfor %}
+            {% endfor %}
+        </ul>
+    </div>
+{% endif %}
+{% if form.non_field_errors %}
+    <div class="error">
+        <p>{{ form.non_field_errors }}</p>
+    </div>
+{% endif %}
