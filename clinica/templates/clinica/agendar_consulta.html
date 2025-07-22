@@ -1,0 +1,62 @@
+<!-- agendar_consulta.html -->
+<h3>Registrar Doctor</h3>
+<form method="post">
+    {% csrf_token %}
+    {{ doctor_form.as_p }}
+    <button type="submit" name="submit_doctor">Registrar Doctor</button>
+</form>
+
+<hr>
+<h3>Registrar Cliente</h3>
+<form method="post">
+    {% csrf_token %}
+    {{ cliente_form.as_p }}
+    <button type="submit" name="submit_cliente">Registrar Cliente</button>
+</form>
+<hr>
+
+<h2>Agendar Consulta</h2>
+<form method="post">
+    {% csrf_token %}
+    {{ consulta_form.as_p }}
+    <button type="submit" name="submit_consulta">Agendar</button>
+</form>
+
+<h3>Consultas Agendadas</h3>
+<table border="1">
+    <tr>
+        <th>Cliente</th>
+        <th>Doctor</th>
+        <th>Fecha</th>
+        <th>Estado</th>
+        <th>Acciones</th>
+    </tr>
+    {% for consulta in consultas %}
+    <tr>
+        <td>{{ consulta.cliente.nombre }}</td>
+        <td>{{ consulta.doctor.nombre }}</td>
+        <td>{{ consulta.fecha_hora|date:"d/m/Y H:i" }}</td>
+        <td>{{ consulta.get_estado_asistencia_display }}</td>
+        <td>
+            {% if consulta.estado_asistencia == 'pendiente' %}
+                <a href="{% url 'actualizar_asistencia' consulta.id 'asistio' %}">Marcar como Asistió</a> |
+                <a href="{% url 'actualizar_asistencia' consulta.id 'no_asistio' %}">No asistió</a>
+            {% else %}
+                <em>Ya registrado</em>
+            {% endif %}
+        </td>
+    </tr>
+    {% empty %}
+    <tr>
+        <td colspan="5">No hay consultas registradas.</td>
+    </tr>
+    {% endfor %}
+</table>
+
+<hr>
+<h4>Efectividad general de asistencia</h4>
+<p>
+    Total de consultas: {{ total_consultas }} <br>
+    Asistencias registradas: {{ asistidas }} <br>
+    <strong>Efectividad: {{ efectividad }}%</strong>
+</p>
