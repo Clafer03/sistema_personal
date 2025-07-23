@@ -2,6 +2,7 @@
 
 from django.db import models
 from django.core.exceptions import ValidationError
+from django.utils import timezone
 
 class Doctor(models.Model):
     nombre = models.CharField(max_length=100)
@@ -42,3 +43,6 @@ class Consulta(models.Model):
 
         if conflicto:
             raise ValidationError("El doctor ya tiene una consulta agendada en ese horario.")
+        
+    def dias_faltantes(self):
+        return (self.fecha_hora.date() - timezone.now().date()).days

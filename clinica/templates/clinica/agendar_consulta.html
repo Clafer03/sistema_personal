@@ -1,28 +1,14 @@
-<!-- agendar_consulta.html -->
-<h3>Registrar Doctor</h3>
-<form method="post">
-    {% csrf_token %}
-    {{ doctor_form.as_p }}
-    <button type="submit" name="submit_doctor">Registrar Doctor</button>
-</form>
+{% extends 'clinica/base.html' %}
 
-<hr>
-<h3>Registrar Cliente</h3>
-<form method="post">
-    {% csrf_token %}
-    {{ cliente_form.as_p }}
-    <button type="submit" name="submit_cliente">Registrar Cliente</button>
-</form>
-<hr>
-
-<h2>Agendar Consulta</h2>
+{% block content %}
+<h1>Agendar Consulta</h1>
 <form method="post">
     {% csrf_token %}
     {{ consulta_form.as_p }}
     <button type="submit" name="submit_consulta">Agendar</button>
 </form>
 
-<h3>Consultas Agendadas</h3>
+<h2>Consultas Agendadas</h2>
 <table border="1">
     <tr>
         <th>Cliente</th>
@@ -30,6 +16,7 @@
         <th>Fecha</th>
         <th>Estado</th>
         <th>Acciones</th>
+        <th>Días Faltantes</th>
     </tr>
     {% for consulta in consultas %}
     <tr>
@@ -38,6 +25,13 @@
         <td>{{ consulta.fecha_hora|date:"d/m/Y H:i" }}</td>
         <td>{{ consulta.get_estado_asistencia_display }}</td>
         <td>
+            {% if consulta.dias_faltantes < 0 %}
+                Vencida ({{ consulta.dias_faltantes }} días)
+            {% else %}
+                Faltan {{ consulta.dias_faltantes }} días
+            {% endif %}
+        </td>
+        <td>        
             {% if consulta.estado_asistencia == 'pendiente' %}
                 <a href="{% url 'actualizar_asistencia' consulta.id 'asistio' %}">Marcar como Asistió</a> |
                 <a href="{% url 'actualizar_asistencia' consulta.id 'no_asistio' %}">No asistió</a>
@@ -53,10 +47,10 @@
     {% endfor %}
 </table>
 
-<hr>
-<h4>Efectividad general de asistencia</h4>
+<h2>Efectividad general de asistencia</h2>
 <p>
     Total de consultas: {{ total_consultas }} <br>
     Asistencias registradas: {{ asistidas }} <br>
     <strong>Efectividad: {{ efectividad }}%</strong>
 </p>
+{% endblock %}

@@ -1,0 +1,88 @@
+# ==================================
+# Django - Gitignore recomendado
+# ==================================
+
+# Entorno virtual (ajusta si usas un nombre diferente)
+env/
+.env/
+
+# Bytecode de Python y cachés
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Archivos de entorno (con variables secretas)
+.env
+.env.*
+
+# Archivos de bases de datos locales
+*.sqlite3
+*.db
+
+# Archivos de migración si los generas por error
+*/migrations/__pycache__/
+*/migrations/*.pyc
+*/migrations/*.pyo
+
+# Archivos temporales del sistema operativo
+.DS_Store
+Thumbs.db
+
+# Configuración de IDEs y editores
+.vscode/
+.idea/
+*.sublime-workspace
+*.sublime-project
+
+# Archivos de logs y temporales
+*.log
+*.pot~
+*.mo~
+*.bak
+*.swp
+
+# Archivos de compilación
+*.egg
+*.egg-info/
+dist/
+build/
+eggs/
+parts/
+bin/
+var/
+sdist/
+develop-eggs/
+.installed.cfg
+lib/
+lib64/
+
+# Node (si usas npm para el frontend)
+node_modules/
+npm-debug.log
+
+# Static y media generados (solo si se generan en producción o con collectstatic)
+staticfiles/
+static/
+media/
+
+# Archivos de lock o dependencias no deseados
+Pipfile.lock
+poetry.lock
+
+# Coverage (pruebas)
+htmlcov/
+.coverage
+.tox/
+.nox/
+.pytest_cache/
+coverage.xml
+nosetests.xml
+test-results/
+
+# Archivos de Docker si no se usan
+docker-compose.override.yml
+*.pid
+
+# ==================================
+# Fin del gitignore
+# ==================================

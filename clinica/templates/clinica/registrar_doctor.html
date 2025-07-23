@@ -1,0 +1,10 @@
+{% extends 'clinica/base.html' %}
+
+{% block content %}
+<h1>Registrar Doctor</h1>
+<form method="post">
+    {% csrf_token %}
+    {{ doctor_form.as_p }}
+    <button type="submit" name="submit_doctor">Registrar Doctor</button>
+</form>
+{% endblock %}
