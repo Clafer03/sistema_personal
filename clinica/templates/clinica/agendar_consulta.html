@@ -1,56 +1,138 @@
 {% extends 'clinica/base.html' %}
+{% load static %}
 
 {% block content %}
-<h1>Agendar Consulta</h1>
-<form method="post">
-    {% csrf_token %}
-    {{ consulta_form.as_p }}
-    <button type="submit" name="submit_consulta">Agendar</button>
-</form>
+<div class="consulta-main">
+    <div class="consulta-form">
+        <h1>Agendar Consulta</h1>
+        <form method="post">
+            {% csrf_token %}
+            {{ consulta_form.as_p }}
+            <button type="submit" name="submit_consulta" class="registrar_consulta">Agendar</button>
+        </form>
+    </div>
+    
+    <div class="consulta-list">
+        <div>
+            <h2>Consultas Agendadas</h2>
+            <div>   
+                <form method="get">
+                    <input type="text" name="q" placeholder="Buscar por nombre o DNI" value="{{ request.GET.q }}">
+                    <button type="submit">Buscar</button>
+                    <a href="{% url 'agendar_consulta' %}"><button type="button">Limpiar</button></a>
+                </form>
+            </div>
+        </div>
+        <div>
+            <table border="1">
+                <tr>
+                    <th>Cliente</th>
+                    <th>Doctor</th>
+                    <th>Fecha</th>
+                    <th>Estado</th>
+                    <th>Acciones</th>
+                    <th>Días Faltantes</th>
+                </tr>
+                {% for consulta in consultas %}
+                <tr>
+                    <td>{{ consulta.cliente.nombre }}</td>
+                    <td>{{ consulta.doctor.nombre }}</td>
+                    <td>{{ consulta.fecha_hora|date:"d/m/Y H:i" }}</td>
+                    <td>{{ consulta.get_estado_asistencia_display }}</td>
+                    <td>
+                        {% if consulta.dias_faltantes < 0 %}
+                            Vencida ({{ consulta.dias_faltantes }} días)
+                        {% else %}
+                            Faltan {{ consulta.dias_faltantes }} días
+                        {% endif %}
+                    </td>
+                    <td>        
+                        <a href="{% url 'actualizar_asistencia' consulta.id 'asistio' %}">
+                            <button {% if consulta.estado_asistencia == 'asistio' %}disabled{% endif %}>Asistió</button>
+                        </a> |
+                        <a href="{% url 'actualizar_asistencia' consulta.id 'no_asistio' %}">
+                            <button {% if consulta.estado_asistencia == 'no_asistio' %}disabled{% endif %}>No asistió</button>
+                        </a>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="5">No hay consultas registradas.</td>
+                </tr>
+                {% endfor %}
+            </table>
+            <div class="pagination">
+                {% if consultas.has_previous %}
+                    <a href="?q={{ request.GET.q }}&page=1" class="pagination-button">« Primera</a>
+                    <a href="?q={{ request.GET.q }}&page={{ consultas.previous_page_number }}" class="pagination-button">Anterior</a>
+                {% endif %}
 
-<h2>Consultas Agendadas</h2>
-<table border="1">
-    <tr>
-        <th>Cliente</th>
-        <th>Doctor</th>
-        <th>Fecha</th>
-        <th>Estado</th>
-        <th>Acciones</th>
-        <th>Días Faltantes</th>
-    </tr>
-    {% for consulta in consultas %}
-    <tr>
-        <td>{{ consulta.cliente.nombre }}</td>
-        <td>{{ consulta.doctor.nombre }}</td>
-        <td>{{ consulta.fecha_hora|date:"d/m/Y H:i" }}</td>
-        <td>{{ consulta.get_estado_asistencia_display }}</td>
-        <td>
-            {% if consulta.dias_faltantes < 0 %}
-                Vencida ({{ consulta.dias_faltantes }} días)
-            {% else %}
-                Faltan {{ consulta.dias_faltantes }} días
-            {% endif %}
-        </td>
-        <td>        
-            {% if consulta.estado_asistencia == 'pendiente' %}
-                <a href="{% url 'actualizar_asistencia' consulta.id 'asistio' %}">Marcar como Asistió</a> |
-                <a href="{% url 'actualizar_asistencia' consulta.id 'no_asistio' %}">No asistió</a>
-            {% else %}
-                <em>Ya registrado</em>
-            {% endif %}
-        </td>
-    </tr>
-    {% empty %}
-    <tr>
-        <td colspan="5">No hay consultas registradas.</td>
-    </tr>
-    {% endfor %}
-</table>
+                {% if consultas.has_next %}
+                    <a href="?q={{ request.GET.q }}&page={{ consultas.next_page_number }}" class="pagination-button">Siguiente</a>
+                    <a href="?q={{ request.GET.q }}&page={{ consultas.paginator.num_pages }}" class="pagination-button">Última »</a>
+                {% endif %}
+            </div>
 
-<h2>Efectividad general de asistencia</h2>
-<p>
-    Total de consultas: {{ total_consultas }} <br>
-    Asistencias registradas: {{ asistidas }} <br>
-    <strong>Efectividad: {{ efectividad }}%</strong>
-</p>
+            <p class="pagination-info">
+                Página {{ consultas.number }} de {{ consultas.paginator.num_pages }}
+            </p>
+
+        </div>
+    </div>
+</div>
+<div class="indicadores-container">
+    <div class="resumen-container">
+        <div class="resumen-texto">
+            <h2>Efectividad general de asistencia</h2>
+            <p>
+            Total de consultas: {{ total_consultas }} <br>
+            Asistencias registradas: {{ asistidas }} <br>
+            <strong>Efectividad: {{ efectividad }}%</strong>
+            </p>
+        </div>
+        <div class="resumen-chart">
+            <canvas id="asistenciaChart"></canvas>
+        </div>
+    </div>
+    <div>
+
+    </div>
+</div>
+<script>
+  const ctx = document.getElementById('asistenciaChart').getContext('2d');
+  const asistenciaChart = new Chart(ctx, {
+    type: 'pie',
+    data: {
+      labels: ['Asistió', 'No Asistió'],
+      datasets: [{
+        label: 'Estado de asistencia',
+        data: [
+          {{ asistidas }},
+          {{ faltas }}
+        ],
+        backgroundColor: [
+          'rgba(75, 192, 192, 0.7)',
+          'rgba(255, 99, 132, 0.7)'
+        ],
+        borderColor: [
+          'rgba(75, 192, 192, 1)',
+          'rgba(255, 99, 132, 1)'
+        ],
+        borderWidth: 1
+      }]
+    },
+    options: {
+      responsive: true,
+      plugins: {
+        legend: {
+          position: 'bottom'
+        }
+      }
+    }
+  });
+</script>
+
 {% endblock %}
+
+<!-- Buscador de pacientes por nombre y dni -->
+<!-- Motivo de falta -->

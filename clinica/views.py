@@ -1,6 +1,8 @@
 from django.shortcuts import render, redirect
 from django.contrib import messages
 from django.shortcuts import get_object_or_404
+from django.db.models import Q
+from django.core.paginator import Paginator
 from .forms import ConsultaForm, ClienteForm, DoctorForm
 from .models import Consulta
 
@@ -19,16 +21,34 @@ def agendar_consulta(request):
                 return redirect('agendar_consulta')
             except Exception as e:
                 messages.error(request, str(e))
-    consultas = Consulta.objects.select_related('cliente', 'doctor').order_by('-fecha_hora')
+
+    # --- FILTRO por nombre o DNI ---
+    consultas = Consulta.objects.select_related('cliente', 'doctor')
+
+    query = request.GET.get('q')
+    if query:
+        consultas = consultas.filter(
+            Q(cliente__nombre__icontains=query) |
+            Q(cliente__dni__icontains=query)
+        )
+
+    consultas = consultas.order_by('-fecha_hora')
+    paginator = Paginator(consultas, 10)  # 10 por página
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+
+    # --- CÁLCULO de indicadores ---
     total_consultas = consultas.count()
     asistidas = consultas.filter(estado_asistencia='asistio').count()
+    faltas = consultas.filter(estado_asistencia='no_asistio').count()
     efectividad = round((asistidas / total_consultas) * 100, 2) if total_consultas > 0 else 0
 
     return render(request, 'clinica/agendar_consulta.html', {
         'consulta_form': form,
-        'consultas': consultas,
+        'consultas': page_obj,
         'efectividad': efectividad,
         'asistidas': asistidas,
+        'faltas': faltas,
         'total_consultas': total_consultas,
     })
     
